@@ -6,7 +6,7 @@ test-fetch-deps:
 	@$(GO_BIN) install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.44.2
 
 .PHONY: test
-test: test-unit test-integration test-format test-lint test-security
+test: test-unit test-integration test-format test-lint test-security test-go-version
 
 .PHONY: test-lint
 test-lint:
@@ -31,7 +31,7 @@ test-security:
 .PHONY: test-go-version
 test-go-version:
 	@echo $@
-	@./_scripts/assert-go-version.sh
+	@$(GO_BIN) run ./cmd/assert-version go
 
 .PHONY: test-integration
 test-integration:
