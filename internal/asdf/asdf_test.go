@@ -6,6 +6,7 @@ import (
 
 	"github.com/lonepeon/golib/testutils"
 
+	"github.com/lonepeon/cicd/internal"
 	"github.com/lonepeon/cicd/internal/asdf"
 )
 
@@ -51,7 +52,7 @@ func TestGetVersion(t *testing.T) {
 	type TestCase struct {
 		Name               string
 		ASDFContent        string
-		Language           string
+		Language           internal.Language
 		ExpectedVersion    string
 		ExpectedHasVersion bool
 	}
@@ -71,7 +72,7 @@ func TestGetVersion(t *testing.T) {
 	check(TestCase{
 		Name:               "WithOneLineForTheLanguage",
 		ASDFContent:        "golang 1.17.7",
-		Language:           "golang",
+		Language:           internal.Go,
 		ExpectedVersion:    "1.17.7",
 		ExpectedHasVersion: true,
 	})
@@ -79,7 +80,7 @@ func TestGetVersion(t *testing.T) {
 	check(TestCase{
 		Name:               "WithSeveralLinesButOneForTheLanguage",
 		ASDFContent:        "ruby 3.1.1\ngolang 1.17.7\nnodejs 16.13.2",
-		Language:           "golang",
+		Language:           internal.Go,
 		ExpectedVersion:    "1.17.7",
 		ExpectedHasVersion: true,
 	})
@@ -87,7 +88,7 @@ func TestGetVersion(t *testing.T) {
 	check(TestCase{
 		Name:               "WithLanguagePresentInComment",
 		ASDFContent:        "#golang 1.16\ngolang 1.17.7\nnodejs 16.13.2",
-		Language:           "golang",
+		Language:           internal.Go,
 		ExpectedVersion:    "1.17.7",
 		ExpectedHasVersion: true,
 	})
@@ -95,7 +96,7 @@ func TestGetVersion(t *testing.T) {
 	check(TestCase{
 		Name:               "WithLanguageFollowedByComment",
 		ASDFContent:        "ruby 3.1.1\ngolang 1.17.7 # a comment\nnodejs 16.13.2",
-		Language:           "golang",
+		Language:           internal.Go,
 		ExpectedVersion:    "1.17.7",
 		ExpectedHasVersion: true,
 	})
@@ -105,17 +106,9 @@ func testParseSuccess(t *testing.T) {
 	versions, err := asdf.Parse("testdata/tool-versions")
 	testutils.RequireNoError(t, err, "expected file to be parsed")
 
-	golang, found := versions.GetVersion(asdf.Go)
+	golang, found := versions.GetVersion(internal.Go)
 	testutils.AssertEqualBool(t, true, found, "expected to find go version")
 	testutils.AssertEqualString(t, "1.17.7", golang, "expected to find correct go version")
-
-	ruby, found := versions.GetVersion(asdf.Ruby)
-	testutils.AssertEqualBool(t, true, found, "expected to find ruby version")
-	testutils.AssertEqualString(t, "3.1.1", ruby, "expected to find correct ruby version")
-
-	nodejs, found := versions.GetVersion(asdf.NodeJS)
-	testutils.AssertEqualBool(t, true, found, "expected to find nodejs version")
-	testutils.AssertEqualString(t, "16.13.2", nodejs, "expected to find correct nodejs version")
 }
 
 func testParseFileNotFound(t *testing.T) {

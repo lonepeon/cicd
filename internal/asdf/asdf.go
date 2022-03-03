@@ -8,6 +8,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/lonepeon/cicd/internal"
 )
 
 var (
@@ -17,7 +19,7 @@ var (
 )
 
 type ASDF struct {
-	versions map[string]string
+	versions map[internal.Language]string
 }
 
 func Parse(path string) (ASDF, error) {
@@ -31,7 +33,7 @@ func Parse(path string) (ASDF, error) {
 }
 
 func ParseFromReader(r io.Reader) (ASDF, error) {
-	versions := make(map[string]string)
+	versions := make(map[internal.Language]string)
 
 	var lineNumber int
 	scanner := bufio.NewScanner(r)
@@ -45,11 +47,16 @@ func ParseFromReader(r io.Reader) (ASDF, error) {
 			continue
 		}
 
-		language := splittedLine[0]
+		languageName := splittedLine[0]
+		language, err := languageFromName(languageName)
+		if err != nil {
+			continue
+		}
+
 		primaryVersion := splittedLine[1]
 
 		if _, found := versions[language]; found {
-			return ASDF{}, fmt.Errorf("%w (line=%d, language=%s)", ErrMultipleDeclaration, lineNumber, language)
+			return ASDF{}, fmt.Errorf("%w (line=%d, language=%s)", ErrMultipleDeclaration, lineNumber, languageName)
 		}
 
 		versions[language] = primaryVersion
@@ -62,7 +69,16 @@ func ParseFromReader(r io.Reader) (ASDF, error) {
 	return ASDF{versions: versions}, nil
 }
 
-func (a ASDF) GetVersion(language string) (string, bool) {
+func (a ASDF) GetVersion(language internal.Language) (string, bool) {
 	version, found := a.versions[language]
 	return version, found
+}
+
+func languageFromName(name string) (internal.Language, error) {
+	switch name {
+	case "golang":
+		return internal.Go, nil
+	default:
+		return internal.Language(-1), fmt.Errorf("unsupported language '%s'", name)
+	}
 }
