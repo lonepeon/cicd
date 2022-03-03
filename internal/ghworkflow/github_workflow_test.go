@@ -1,6 +1,7 @@
 package ghworkflow_test
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
@@ -23,7 +24,7 @@ func TestGetVersionForGo(t *testing.T) {
 		Name             string
 		Object           string
 		Language         internal.Language
-		ExpectedVersions []string
+		ExpectedVersions []ghworkflow.Entry
 	}
 
 	check := func(tc Testcase) {
@@ -36,7 +37,8 @@ func TestGetVersionForGo(t *testing.T) {
 			testutils.RequireEqualInt(t, len(tc.ExpectedVersions), len(versions), "unexpected number of versions: %v", versions)
 
 			for i := range tc.ExpectedVersions {
-				testutils.AssertEqualString(t, tc.ExpectedVersions[i], versions[i], "unexpected versions")
+				testutils.AssertEqualString(t, tc.ExpectedVersions[i].Version, versions[i].Version, "unexpected version")
+				testutils.AssertEqualInt(t, tc.ExpectedVersions[i].Line, versions[i].Line, "unexpected line")
 			}
 		})
 	}
@@ -58,7 +60,7 @@ jobs:
 	check(Testcase{
 		Name:             "withOneDeclaration",
 		Language:         internal.Go,
-		ExpectedVersions: []string{"1.17.7"},
+		ExpectedVersions: []ghworkflow.Entry{{Version: "1.17.7", Line: 11}},
 		Object: `
 jobs:
   format-tests:
@@ -74,9 +76,12 @@ jobs:
 	})
 
 	check(Testcase{
-		Name:             "withMultipleSameDeclarations",
-		Language:         internal.Go,
-		ExpectedVersions: []string{"1.17.7", "1.17.7"},
+		Name:     "withMultipleSameDeclarations",
+		Language: internal.Go,
+		ExpectedVersions: []ghworkflow.Entry{
+			{Version: "1.17.7", Line: 11},
+			{Version: "1.17.7", Line: 21},
+		},
 		Object: `
 jobs:
   format-tests:
@@ -102,9 +107,12 @@ jobs:
 	})
 
 	check(Testcase{
-		Name:             "withMultipleDifferentDeclarations",
-		Language:         internal.Go,
-		ExpectedVersions: []string{"1.17.7", "1.16"},
+		Name:     "withMultipleDifferentDeclarations",
+		Language: internal.Go,
+		ExpectedVersions: []ghworkflow.Entry{
+			{Version: "1.17.7", Line: 11},
+			{Version: "1.16", Line: 21},
+		},
 		Object: `
 jobs:
   format-tests:
@@ -137,8 +145,10 @@ func testParseGoSuccess(t *testing.T) {
 
 	versions := workflow.GetVersions(internal.Go)
 	testutils.RequireEqualInt(t, 2, len(versions), "unexpected number of matches in %v", versions)
-	testutils.AssertEqualString(t, "1.17.7", versions[0], "expected to find correct go version")
-	testutils.AssertEqualString(t, "1.17.7", versions[1], "expected to find correct go version")
+	testutils.AssertEqualString(t, "1.17.7", versions[0].Version, "expected to find correct go version")
+	testutils.AssertEqualString(t, "1.17.7", versions[1].Version, "expected to find correct go version")
+	testutils.AssertEqualString(t, "17", strconv.Itoa(versions[0].Line), "expected to find correct line")
+	testutils.AssertEqualString(t, "31", strconv.Itoa(versions[1].Line), "expected to find correct line")
 }
 
 func testParseFileNotFound(t *testing.T) {
