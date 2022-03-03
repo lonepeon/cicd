@@ -1,6 +1,7 @@
 package ghworkflow
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -14,7 +15,12 @@ var (
 	actionSetupGoV2 = regexp.MustCompile(`  go-version:\s+"?((\d+\.?)+)"?`)
 )
 
-type VersionsMatcherFunc func() []string
+type Entry struct {
+	Version string
+	Line    int
+}
+
+type VersionMatcherFunc func(string) (string, bool)
 
 type GitHubWorkflow struct {
 	content string
@@ -39,33 +45,42 @@ func ParseFromReader(r io.Reader) (GitHubWorkflow, error) {
 	return GitHubWorkflow{content: content.String()}, nil
 }
 
-func (w GitHubWorkflow) GetVersions(lang internal.Language) []string {
+func (w GitHubWorkflow) GetVersions(lang internal.Language) []Entry {
+	var versions []Entry
+	var lineNumber int
+	scanner := bufio.NewScanner(strings.NewReader(w.content))
 	matchers := w.versionMatchers(lang)
 
-	var versions []string
-	for _, matcher := range matchers {
-		versions = append(versions, matcher()...)
+	for scanner.Scan() {
+		lineNumber++
+
+		for _, matcher := range matchers {
+			version, ok := matcher(scanner.Text())
+			if !ok {
+				continue
+			}
+
+			versions = append(versions, Entry{Version: version, Line: lineNumber})
+		}
 	}
 
 	return versions
 }
 
-func (w GitHubWorkflow) versionMatchers(lang internal.Language) []VersionsMatcherFunc {
+func (w GitHubWorkflow) versionMatchers(lang internal.Language) []VersionMatcherFunc {
 	switch lang {
 	case internal.Go:
-		return []VersionsMatcherFunc{w.actionSetupGoV2Matcher}
+		return []VersionMatcherFunc{w.actionSetupGoV2Matcher}
 	}
 
 	panic(fmt.Sprintf("language '%v' is not supported", lang))
 }
 
-func (w GitHubWorkflow) actionSetupGoV2Matcher() []string {
-	matches := actionSetupGoV2.FindAllStringSubmatch(w.content, -1)
-
-	versions := make([]string, len(matches))
-	for i := range matches {
-		versions[i] = matches[i][1]
+func (w GitHubWorkflow) actionSetupGoV2Matcher(line string) (string, bool) {
+	matches := actionSetupGoV2.FindStringSubmatch(line)
+	if len(matches) < 2 {
+		return "", false
 	}
 
-	return versions
+	return matches[1], true
 }
