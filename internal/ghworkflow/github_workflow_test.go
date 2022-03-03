@@ -7,6 +7,7 @@ import (
 
 	"github.com/lonepeon/cicd/internal"
 	"github.com/lonepeon/cicd/internal/ghworkflow"
+	"github.com/lonepeon/cicd/internal/ghworkflow/ghworkflowtest"
 	"github.com/lonepeon/golib/testutils"
 )
 
@@ -47,94 +48,34 @@ func TestGetVersionForGo(t *testing.T) {
 		Name:             "withNoDeclaration",
 		Language:         internal.Go,
 		ExpectedVersions: nil,
-		Object: `
-jobs:
-  format-tests:
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: "checkout code"
-        uses: actions/checkout@v2
-`,
+		Object:           ghworkflowtest.NewWorkflowFile(t).Build(),
 	})
 
 	check(Testcase{
 		Name:             "withOneDeclaration",
 		Language:         internal.Go,
-		ExpectedVersions: []ghworkflow.Entry{{Version: "1.17.7", Line: 11}},
-		Object: `
-jobs:
-  format-tests:
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: "checkout code"
-        uses: actions/checkout@v2
-      - name: "setup go version"
-        uses: actions/setup-go@v2
-        with:
-          go-version: "1.17.7"
-`,
+		ExpectedVersions: []ghworkflow.Entry{{Version: "1.17.7", Line: 18}},
+		Object:           ghworkflowtest.NewWorkflowFile(t).WithActionSetupGoV2("1.17.7").Build(),
 	})
 
 	check(Testcase{
 		Name:     "withMultipleSameDeclarations",
 		Language: internal.Go,
 		ExpectedVersions: []ghworkflow.Entry{
-			{Version: "1.17.7", Line: 11},
-			{Version: "1.17.7", Line: 21},
+			{Version: "1.17.7", Line: 18},
+			{Version: "1.17.7", Line: 31},
 		},
-		Object: `
-jobs:
-  format-tests:
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: "checkout code"
-        uses: actions/checkout@v2
-      - name: "setup go version"
-        uses: actions/setup-go@v2
-        with:
-          go-version: "1.17.7"
-
-  integration-tests:
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: "checkout code"
-        uses: actions/checkout@v2
-      - name: "setup go version"
-        uses: actions/setup-go@v2
-        with:
-          go-version: "1.17.7"
-`,
+		Object: ghworkflowtest.NewWorkflowFile(t).WithActionSetupGoV2("1.17.7", "1.17.7").Build(),
 	})
 
 	check(Testcase{
 		Name:     "withMultipleDifferentDeclarations",
 		Language: internal.Go,
 		ExpectedVersions: []ghworkflow.Entry{
-			{Version: "1.17.7", Line: 11},
-			{Version: "1.16", Line: 21},
+			{Version: "1.17.7", Line: 18},
+			{Version: "1.16", Line: 31},
 		},
-		Object: `
-jobs:
-  format-tests:
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: "checkout code"
-        uses: actions/checkout@v2
-      - name: "setup go version"
-        uses: actions/setup-go@v2
-        with:
-          go-version: "1.17.7"
-
-  integration-tests:
-    runs-on: "ubuntu-latest"
-    steps:
-      - name: "checkout code"
-        uses: actions/checkout@v2
-      - name: "setup go version"
-        uses: actions/setup-go@v2
-        with:
-          go-version: "1.16"
-`,
+		Object: ghworkflowtest.NewWorkflowFile(t).WithActionSetupGoV2("1.17.7", "1.16").Build(),
 	})
 
 }
