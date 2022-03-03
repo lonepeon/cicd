@@ -5,13 +5,24 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+
+	"github.com/lonepeon/cicd/internal"
 )
 
 var (
 	goVersionRegex = regexp.MustCompile(`go(([\d]+.?)+)`)
 )
 
-func GoVersion() (string, error) {
+func GetVersion(lang internal.Language) (string, error) {
+	switch lang {
+	case internal.Go:
+		return goVersion()
+	}
+
+	panic(fmt.Sprintf("missing switch clause for language '%v'", lang))
+}
+
+func goVersion() (string, error) {
 	cmd := exec.Command("go", "version")
 
 	var stdout strings.Builder
