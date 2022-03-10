@@ -24,7 +24,7 @@ The source of truth is defined to be the local ASDF tool-versions file.
 Arguments
 
 	language
-	  (required) one of the supported language: go
+	  (required) one of the supported language: go, rust
 
 Flags
 
@@ -118,6 +118,8 @@ func expectedLanguageVersion(asdfFilePath string, languageName string) (internal
 	switch languageName {
 	case "go":
 		language = internal.Go
+	case "rust":
+		language = internal.Rust
 	default:
 		return internal.Language(-1), "", fmt.Errorf("unsupported language '%s'", languageName)
 	}

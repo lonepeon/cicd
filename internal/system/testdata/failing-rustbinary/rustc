@@ -1,0 +1,4 @@
+#! /usr/bin/env bash
+
+>&2 echo "this is a failing rust binary"
+exit 1;

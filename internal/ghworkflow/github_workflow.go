@@ -13,6 +13,7 @@ import (
 
 var (
 	actionSetupGoV2 = regexp.MustCompile(`  go-version:\s+"?((\d+\.?)+)"?`)
+	actionSetupRust = regexp.MustCompile(`  toolchain:\s+"?((\d+\.?)+)"?`)
 )
 
 type Entry struct {
@@ -71,6 +72,8 @@ func (w GitHubWorkflow) versionMatchers(lang internal.Language) []VersionMatcher
 	switch lang {
 	case internal.Go:
 		return []VersionMatcherFunc{w.actionSetupGoV2Matcher}
+	case internal.Rust:
+		return []VersionMatcherFunc{w.actionSetupRustMatcher}
 	}
 
 	panic(fmt.Sprintf("language '%v' is not supported", lang))
@@ -78,6 +81,15 @@ func (w GitHubWorkflow) versionMatchers(lang internal.Language) []VersionMatcher
 
 func (w GitHubWorkflow) actionSetupGoV2Matcher(line string) (string, bool) {
 	matches := actionSetupGoV2.FindStringSubmatch(line)
+	if len(matches) < 2 {
+		return "", false
+	}
+
+	return matches[1], true
+}
+
+func (w GitHubWorkflow) actionSetupRustMatcher(line string) (string, bool) {
+	matches := actionSetupRust.FindStringSubmatch(line)
 	if len(matches) < 2 {
 		return "", false
 	}
