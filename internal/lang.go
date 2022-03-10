@@ -4,4 +4,5 @@ type Language int
 
 const (
 	Go Language = iota
+	Rust
 )
