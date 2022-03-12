@@ -16,38 +16,38 @@ var (
 	actionSetupRust = regexp.MustCompile(`  toolchain:\s+"?((\d+\.?)+)"?`)
 )
 
-type Entry struct {
+type WorkflowMatch struct {
 	Version string
 	Line    int
 }
 
 type VersionMatcherFunc func(string) (string, bool)
 
-type GitHubWorkflow struct {
+type Workflow struct {
 	content string
 }
 
-func Parse(path string) (GitHubWorkflow, error) {
+func ParseWorkflow(path string) (Workflow, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return GitHubWorkflow{}, fmt.Errorf("can't open github workflow: %v", err)
+		return Workflow{}, fmt.Errorf("can't open github workflow: %v", err)
 	}
 	defer f.Close()
 
-	return ParseFromReader(f)
+	return ParseWorkflowFromReader(f)
 }
 
-func ParseFromReader(r io.Reader) (GitHubWorkflow, error) {
+func ParseWorkflowFromReader(r io.Reader) (Workflow, error) {
 	var content strings.Builder
 	if _, err := io.Copy(&content, r); err != nil {
-		return GitHubWorkflow{}, fmt.Errorf("")
+		return Workflow{}, fmt.Errorf("")
 	}
 
-	return GitHubWorkflow{content: content.String()}, nil
+	return Workflow{content: content.String()}, nil
 }
 
-func (w GitHubWorkflow) GetVersions(lang internal.Language) []Entry {
-	var versions []Entry
+func (w Workflow) GetVersions(lang internal.Language) []WorkflowMatch {
+	var versions []WorkflowMatch
 	var lineNumber int
 	scanner := bufio.NewScanner(strings.NewReader(w.content))
 	matchers := w.versionMatchers(lang)
@@ -61,14 +61,14 @@ func (w GitHubWorkflow) GetVersions(lang internal.Language) []Entry {
 				continue
 			}
 
-			versions = append(versions, Entry{Version: version, Line: lineNumber})
+			versions = append(versions, WorkflowMatch{Version: version, Line: lineNumber})
 		}
 	}
 
 	return versions
 }
 
-func (w GitHubWorkflow) versionMatchers(lang internal.Language) []VersionMatcherFunc {
+func (w Workflow) versionMatchers(lang internal.Language) []VersionMatcherFunc {
 	switch lang {
 	case internal.Go:
 		return []VersionMatcherFunc{w.actionSetupGoV2Matcher}
@@ -79,7 +79,7 @@ func (w GitHubWorkflow) versionMatchers(lang internal.Language) []VersionMatcher
 	panic(fmt.Sprintf("language '%v' is not supported", lang))
 }
 
-func (w GitHubWorkflow) actionSetupGoV2Matcher(line string) (string, bool) {
+func (w Workflow) actionSetupGoV2Matcher(line string) (string, bool) {
 	matches := actionSetupGoV2.FindStringSubmatch(line)
 	if len(matches) < 2 {
 		return "", false
@@ -88,7 +88,7 @@ func (w GitHubWorkflow) actionSetupGoV2Matcher(line string) (string, bool) {
 	return matches[1], true
 }
 
-func (w GitHubWorkflow) actionSetupRustMatcher(line string) (string, bool) {
+func (w Workflow) actionSetupRustMatcher(line string) (string, bool) {
 	matches := actionSetupRust.FindStringSubmatch(line)
 	if len(matches) < 2 {
 		return "", false
