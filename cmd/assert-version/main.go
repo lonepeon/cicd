@@ -95,7 +95,7 @@ func assertGitHubWorkflowVersions(reporter *report.VersionReporter, workflowDir 
 			return nil
 		}
 
-		workflow, err := github.Parse(path)
+		workflow, err := github.ParseWorkflow(path)
 		if err != nil {
 			return err
 		}

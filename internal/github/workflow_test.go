@@ -27,13 +27,13 @@ func TestGetVersion(t *testing.T) {
 		Name             string
 		Object           string
 		Language         internal.Language
-		ExpectedVersions []github.Entry
+		ExpectedVersions []github.WorkflowMatch
 	}
 
 	check := func(tc Testcase) {
 		t.Run(tc.Name, func(t *testing.T) {
 			r := strings.NewReader(tc.Object)
-			workflow, err := github.ParseFromReader(r)
+			workflow, err := github.ParseWorkflowFromReader(r)
 			testutils.RequireNoError(t, err, "unexpected error while parsing workflow")
 
 			versions := workflow.GetVersions(tc.Language)
@@ -63,21 +63,21 @@ func TestGetVersion(t *testing.T) {
 	check(Testcase{
 		Name:             "withOneGoDeclaration",
 		Language:         internal.Go,
-		ExpectedVersions: []github.Entry{{Version: "1.17.7", Line: 18}},
+		ExpectedVersions: []github.WorkflowMatch{{Version: "1.17.7", Line: 18}},
 		Object:           githubtest.NewWorkflowFile(t).WithActionSetupGoV2("1.17.7").Build(),
 	})
 
 	check(Testcase{
 		Name:             "withOneRustDeclaration",
 		Language:         internal.Rust,
-		ExpectedVersions: []github.Entry{{Version: "1.59.0", Line: 18}},
+		ExpectedVersions: []github.WorkflowMatch{{Version: "1.59.0", Line: 18}},
 		Object:           githubtest.NewWorkflowFile(t).WithActionSetupRust("1.59.0").Build(),
 	})
 
 	check(Testcase{
 		Name:     "withMultipleSameGoDeclarations",
 		Language: internal.Go,
-		ExpectedVersions: []github.Entry{
+		ExpectedVersions: []github.WorkflowMatch{
 			{Version: "1.17.7", Line: 18},
 			{Version: "1.17.7", Line: 31},
 		},
@@ -87,7 +87,7 @@ func TestGetVersion(t *testing.T) {
 	check(Testcase{
 		Name:     "withMultipleSameRustDeclarations",
 		Language: internal.Rust,
-		ExpectedVersions: []github.Entry{
+		ExpectedVersions: []github.WorkflowMatch{
 			{Version: "1.59.0", Line: 18},
 			{Version: "1.59.0", Line: 31},
 		},
@@ -97,7 +97,7 @@ func TestGetVersion(t *testing.T) {
 	check(Testcase{
 		Name:     "withMultipleDifferentGoDeclarations",
 		Language: internal.Go,
-		ExpectedVersions: []github.Entry{
+		ExpectedVersions: []github.WorkflowMatch{
 			{Version: "1.17.7", Line: 18},
 			{Version: "1.16", Line: 31},
 		},
@@ -107,7 +107,7 @@ func TestGetVersion(t *testing.T) {
 	check(Testcase{
 		Name:     "withMultipleDifferentRustDeclarations",
 		Language: internal.Rust,
-		ExpectedVersions: []github.Entry{
+		ExpectedVersions: []github.WorkflowMatch{
 			{Version: "1.59.0", Line: 18},
 			{Version: "1.58.0", Line: 31},
 		},
@@ -116,7 +116,7 @@ func TestGetVersion(t *testing.T) {
 }
 
 func testParseGoSuccess(t *testing.T) {
-	workflow, err := github.Parse("testdata/workflow-go.yaml")
+	workflow, err := github.ParseWorkflow("testdata/workflow-go.yaml")
 	testutils.RequireNoError(t, err, "expected file to be parsed")
 
 	versions := workflow.GetVersions(internal.Go)
@@ -128,7 +128,7 @@ func testParseGoSuccess(t *testing.T) {
 }
 
 func testParseRustSuccess(t *testing.T) {
-	workflow, err := github.Parse("testdata/workflow-rust.yaml")
+	workflow, err := github.ParseWorkflow("testdata/workflow-rust.yaml")
 	testutils.RequireNoError(t, err, "expected file to be parsed")
 
 	versions := workflow.GetVersions(internal.Rust)
@@ -140,7 +140,7 @@ func testParseRustSuccess(t *testing.T) {
 }
 
 func testParseFileNotFound(t *testing.T) {
-	_, err := github.Parse("not-a-file")
+	_, err := github.ParseWorkflow("not-a-file")
 	testutils.RequireHasError(t, err, "expected file to not be parsed")
 	testutils.AssertContainsString(t, "can't open", err.Error(), "expected error message to contain reason")
 	testutils.AssertContainsString(t, "not-a-file", err.Error(), "expected error message to contain filename")
