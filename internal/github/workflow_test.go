@@ -1,4 +1,4 @@
-package ghworkflow_test
+package github_test
 
 import (
 	"strconv"
@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/lonepeon/cicd/internal"
-	"github.com/lonepeon/cicd/internal/ghworkflow"
-	"github.com/lonepeon/cicd/internal/ghworkflow/ghworkflowtest"
+	"github.com/lonepeon/cicd/internal/github"
+	"github.com/lonepeon/cicd/internal/github/githubtest"
 	"github.com/lonepeon/golib/testutils"
 )
 
@@ -27,13 +27,13 @@ func TestGetVersion(t *testing.T) {
 		Name             string
 		Object           string
 		Language         internal.Language
-		ExpectedVersions []ghworkflow.Entry
+		ExpectedVersions []github.Entry
 	}
 
 	check := func(tc Testcase) {
 		t.Run(tc.Name, func(t *testing.T) {
 			r := strings.NewReader(tc.Object)
-			workflow, err := ghworkflow.ParseFromReader(r)
+			workflow, err := github.ParseFromReader(r)
 			testutils.RequireNoError(t, err, "unexpected error while parsing workflow")
 
 			versions := workflow.GetVersions(tc.Language)
@@ -50,73 +50,73 @@ func TestGetVersion(t *testing.T) {
 		Name:             "withNoGoDeclaration",
 		Language:         internal.Go,
 		ExpectedVersions: nil,
-		Object:           ghworkflowtest.NewWorkflowFile(t).Build(),
+		Object:           githubtest.NewWorkflowFile(t).Build(),
 	})
 
 	check(Testcase{
 		Name:             "withNoRustDeclaration",
 		Language:         internal.Rust,
 		ExpectedVersions: nil,
-		Object:           ghworkflowtest.NewWorkflowFile(t).Build(),
+		Object:           githubtest.NewWorkflowFile(t).Build(),
 	})
 
 	check(Testcase{
 		Name:             "withOneGoDeclaration",
 		Language:         internal.Go,
-		ExpectedVersions: []ghworkflow.Entry{{Version: "1.17.7", Line: 18}},
-		Object:           ghworkflowtest.NewWorkflowFile(t).WithActionSetupGoV2("1.17.7").Build(),
+		ExpectedVersions: []github.Entry{{Version: "1.17.7", Line: 18}},
+		Object:           githubtest.NewWorkflowFile(t).WithActionSetupGoV2("1.17.7").Build(),
 	})
 
 	check(Testcase{
 		Name:             "withOneRustDeclaration",
 		Language:         internal.Rust,
-		ExpectedVersions: []ghworkflow.Entry{{Version: "1.59.0", Line: 18}},
-		Object:           ghworkflowtest.NewWorkflowFile(t).WithActionSetupRust("1.59.0").Build(),
+		ExpectedVersions: []github.Entry{{Version: "1.59.0", Line: 18}},
+		Object:           githubtest.NewWorkflowFile(t).WithActionSetupRust("1.59.0").Build(),
 	})
 
 	check(Testcase{
 		Name:     "withMultipleSameGoDeclarations",
 		Language: internal.Go,
-		ExpectedVersions: []ghworkflow.Entry{
+		ExpectedVersions: []github.Entry{
 			{Version: "1.17.7", Line: 18},
 			{Version: "1.17.7", Line: 31},
 		},
-		Object: ghworkflowtest.NewWorkflowFile(t).WithActionSetupGoV2("1.17.7", "1.17.7").Build(),
+		Object: githubtest.NewWorkflowFile(t).WithActionSetupGoV2("1.17.7", "1.17.7").Build(),
 	})
 
 	check(Testcase{
 		Name:     "withMultipleSameRustDeclarations",
 		Language: internal.Rust,
-		ExpectedVersions: []ghworkflow.Entry{
+		ExpectedVersions: []github.Entry{
 			{Version: "1.59.0", Line: 18},
 			{Version: "1.59.0", Line: 31},
 		},
-		Object: ghworkflowtest.NewWorkflowFile(t).WithActionSetupRust("1.59.0", "1.59.0").Build(),
+		Object: githubtest.NewWorkflowFile(t).WithActionSetupRust("1.59.0", "1.59.0").Build(),
 	})
 
 	check(Testcase{
 		Name:     "withMultipleDifferentGoDeclarations",
 		Language: internal.Go,
-		ExpectedVersions: []ghworkflow.Entry{
+		ExpectedVersions: []github.Entry{
 			{Version: "1.17.7", Line: 18},
 			{Version: "1.16", Line: 31},
 		},
-		Object: ghworkflowtest.NewWorkflowFile(t).WithActionSetupGoV2("1.17.7", "1.16").Build(),
+		Object: githubtest.NewWorkflowFile(t).WithActionSetupGoV2("1.17.7", "1.16").Build(),
 	})
 
 	check(Testcase{
 		Name:     "withMultipleDifferentRustDeclarations",
 		Language: internal.Rust,
-		ExpectedVersions: []ghworkflow.Entry{
+		ExpectedVersions: []github.Entry{
 			{Version: "1.59.0", Line: 18},
 			{Version: "1.58.0", Line: 31},
 		},
-		Object: ghworkflowtest.NewWorkflowFile(t).WithActionSetupRust("1.59.0", "1.58.0").Build(),
+		Object: githubtest.NewWorkflowFile(t).WithActionSetupRust("1.59.0", "1.58.0").Build(),
 	})
 }
 
 func testParseGoSuccess(t *testing.T) {
-	workflow, err := ghworkflow.Parse("testdata/workflow-go.yaml")
+	workflow, err := github.Parse("testdata/workflow-go.yaml")
 	testutils.RequireNoError(t, err, "expected file to be parsed")
 
 	versions := workflow.GetVersions(internal.Go)
@@ -128,7 +128,7 @@ func testParseGoSuccess(t *testing.T) {
 }
 
 func testParseRustSuccess(t *testing.T) {
-	workflow, err := ghworkflow.Parse("testdata/workflow-rust.yaml")
+	workflow, err := github.Parse("testdata/workflow-rust.yaml")
 	testutils.RequireNoError(t, err, "expected file to be parsed")
 
 	versions := workflow.GetVersions(internal.Rust)
@@ -140,7 +140,7 @@ func testParseRustSuccess(t *testing.T) {
 }
 
 func testParseFileNotFound(t *testing.T) {
-	_, err := ghworkflow.Parse("not-a-file")
+	_, err := github.Parse("not-a-file")
 	testutils.RequireHasError(t, err, "expected file to not be parsed")
 	testutils.AssertContainsString(t, "can't open", err.Error(), "expected error message to contain reason")
 	testutils.AssertContainsString(t, "not-a-file", err.Error(), "expected error message to contain filename")

@@ -1,4 +1,4 @@
-package ghworkflowtest
+package githubtest
 
 import (
 	"html/template"

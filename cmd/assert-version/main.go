@@ -9,7 +9,7 @@ import (
 
 	"github.com/lonepeon/cicd/internal"
 	"github.com/lonepeon/cicd/internal/asdf"
-	"github.com/lonepeon/cicd/internal/ghworkflow"
+	"github.com/lonepeon/cicd/internal/github"
 	"github.com/lonepeon/cicd/internal/report"
 	"github.com/lonepeon/cicd/internal/system"
 )
@@ -95,7 +95,7 @@ func assertGitHubWorkflowVersions(reporter *report.VersionReporter, workflowDir 
 			return nil
 		}
 
-		workflow, err := ghworkflow.Parse(path)
+		workflow, err := github.Parse(path)
 		if err != nil {
 			return err
 		}
