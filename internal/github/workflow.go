@@ -1,4 +1,4 @@
-package ghworkflow
+package github
 
 import (
 	"bufio"
