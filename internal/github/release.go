@@ -8,12 +8,17 @@ import (
 
 type ReleaseID int
 
+type Asset struct {
+	ContentType string
+	Content     []byte
+}
+
 func CreateRelease(client *Client, repository string, releaseName string, commitish string) (ReleaseID, error) {
 	type Response struct {
 		ID int `json:"id"`
 	}
 
-	body, httpCode, err := client.Post(fmt.Sprintf("/repos/%s/releases", repository), map[string]string{
+	body, httpCode, err := client.PostAPI(fmt.Sprintf("/repos/%s/releases", repository), map[string]string{
 		"target_commitish": commitish,
 		"tag_name":         releaseName,
 		"name":             releaseName,
@@ -33,4 +38,17 @@ func CreateRelease(client *Client, repository string, releaseName string, commit
 	}
 
 	return ReleaseID(response.ID), nil
+}
+
+func UploadAsset(client *Client, repository string, releaseID ReleaseID, asset Asset) error {
+	_, httpCode, err := client.PostUpload(fmt.Sprintf("/repos/%s/releases/%d/assets", repository, releaseID), asset.ContentType, asset.Content)
+	if err != nil {
+		return fmt.Errorf("can't upload asset to release: %v", err)
+	}
+
+	if httpCode != http.StatusCreated {
+		return fmt.Errorf("unexpected upload asset status code (expected=201, actual=%d)", httpCode)
+	}
+
+	return nil
 }

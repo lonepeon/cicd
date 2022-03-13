@@ -1,6 +1,7 @@
 package github_test
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/lonepeon/cicd/internal/github"
@@ -25,4 +26,27 @@ func TestCreateRelease(t *testing.T) {
 
 	testutils.RequireNoError(t, err, "can't create release")
 	githubtest.AssertEqualReleaseID(t, github.ReleaseID(42), releaseID, "unexpected release ID")
+}
+
+func TestUploadAsset(t *testing.T) {
+	file := bytes.NewBufferString("my binary")
+
+	server := githubtest.NewUploadServer(t, "<username>", "<token>")
+	server.ExpectedRepository = "lonepeon/something"
+	server.ExpectedReleaseID = 42
+	server.ExpectedContentType = "application/octet-stream"
+	server.ExpectedContent = file.Bytes()
+	client := server.StartMockServer()
+
+	err := github.UploadAsset(
+		client,
+		"lonepeon/something",
+		github.ReleaseID(42),
+		github.Asset{
+			ContentType: "application/octet-stream",
+			Content:     file.Bytes(),
+		},
+	)
+
+	testutils.RequireNoError(t, err, "can't upload assets")
 }
