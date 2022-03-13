@@ -1,5 +1,15 @@
 GO_BIN := go
 
+.PHONY: dev-golib-on
+dev-golib-on:
+	@go mod edit -replace github.com/lonepeon/golib=../golib
+	@go mod download
+
+.PHONY: dev-golib-off
+dev-golib-off:
+	@go mod edit -dropreplace github.com/lonepeon/golib
+	@go mod download
+
 .PHONY: test-fetch-deps
 test-fetch-deps:
 	@$(GO_BIN) install honnef.co/go/tools/cmd/staticcheck@2021.1.2

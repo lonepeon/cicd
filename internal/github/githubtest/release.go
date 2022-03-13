@@ -18,6 +18,69 @@ func AssertEqualReleaseID(t *testing.T, expected github.ReleaseID, actual github
 	testutils.AssertEqualInt(t, int(expected), int(actual), pattern, vars...)
 }
 
+type UploadServer struct {
+	t        *testing.T
+	username string
+	token    string
+
+	ExpectedRepository  string
+	ExpectedReleaseID   int
+	ExpectedContentType string
+	ExpectedContent     []byte
+}
+
+func (s *UploadServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	testutils.AssertEqualString(s.t, fmt.Sprintf("/repos/%s/releases/%d/assets", s.ExpectedRepository, s.ExpectedReleaseID), r.URL.Path, "unexpected request path")
+
+	username, token, found := r.BasicAuth()
+	testutils.AssertEqualBool(s.t, true, found, "missing password in basic authentication")
+	testutils.AssertEqualString(s.t, s.username, username, "unexpected authenticated username")
+	testutils.AssertEqualString(s.t, s.token, token, "unexpected authenticated token")
+
+	rawBody, err := io.ReadAll(r.Body)
+	testutils.AssertNoError(s.t, err, "can't read request body")
+
+	testutils.AssertEqualBytes(s.t, s.ExpectedContent, rawBody, "unexpected asset")
+	testutils.AssertEqualString(s.t, s.ExpectedContentType, r.Header.Get("Content-Type"), "unexpected request content type")
+
+	w.WriteHeader(http.StatusCreated)
+
+	fmt.Fprintf(w, `
+ {
+  "url": "https://api.github.com/repos/%[1]s/releases/assets/1",
+  "browser_download_url": "https://github.com/%[1]s/releases/download/v1.0.0/example.zip",
+  "id": 1,
+  "node_id": "MDEyOlJlbGVhc2VBc3NldDE=",
+  "name": "example.zip",
+  "label": "short description",
+  "state": "uploaded",
+  "content_type": "application/zip",
+  "size": 1024,
+  "download_count": 42,
+  "created_at": "2013-02-27T19:35:32Z",
+  "updated_at": "2013-02-27T19:35:32Z",
+  "uploader": {
+    "login": "octocat",
+    "id": 1,
+  }
+}`, s.ExpectedRepository)
+}
+
+func (s *UploadServer) StartMockServer() *github.Client {
+	mock := httptest.NewServer(s)
+	s.t.Cleanup(mock.Close)
+
+	client := github.NewClient(s.username, s.token)
+	client.HTTPClient = mock.Client()
+	client.UploadURL = mock.URL
+
+	return client
+}
+
+func NewUploadServer(t *testing.T, username, token string) *UploadServer {
+	return &UploadServer{t: t, username: username, token: token}
+}
+
 type ReleaseServer struct {
 	t        *testing.T
 	username string
@@ -82,7 +145,7 @@ func (s *ReleaseServer) StartMockServer() *github.Client {
 
 	client := github.NewClient(s.username, s.token)
 	client.HTTPClient = mock.Client()
-	client.URL = mock.URL
+	client.APIURL = mock.URL
 
 	return client
 }
