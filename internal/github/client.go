@@ -20,6 +20,7 @@ type Client struct {
 func NewClient(username, token string) *Client {
 	return &Client{
 		APIURL:     "https://api.github.com",
+		UploadURL:  "https://uploads.github.com",
 		HTTPClient: http.DefaultClient,
 		username:   username,
 		token:      token,

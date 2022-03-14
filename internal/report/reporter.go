@@ -1,11 +1,8 @@
 package report
 
 import (
-	"fmt"
 	"io"
 	"os"
-
-	"github.com/lonepeon/cicd/internal/terminal/vt100"
 )
 
 type Reporter struct {
@@ -16,12 +13,12 @@ type Reporter struct {
 }
 
 func (r *Reporter) Success(msg string) {
-	fmt.Fprintln(r.stdout(), vt100.Green("[OK] "), msg)
+	Fsuccess(r.stdout(), msg)
 }
 
 func (r *Reporter) Fail(msg string) {
 	r.hasFailed = true
-	fmt.Fprintln(r.stderr(), vt100.Red("[ERR]"), msg)
+	Ffail(r.stderr(), msg)
 }
 
 func (r *Reporter) HasFailed() bool {

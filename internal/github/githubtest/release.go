@@ -27,10 +27,12 @@ type UploadServer struct {
 	ExpectedReleaseID   int
 	ExpectedContentType string
 	ExpectedContent     []byte
+	ExpectedAssetName   string
 }
 
 func (s *UploadServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	testutils.AssertEqualString(s.t, fmt.Sprintf("/repos/%s/releases/%d/assets", s.ExpectedRepository, s.ExpectedReleaseID), r.URL.Path, "unexpected request path")
+	testutils.AssertEqualString(s.t, s.ExpectedAssetName, r.URL.Query().Get("name"), "unexpected asset name")
 
 	username, token, found := r.BasicAuth()
 	testutils.AssertEqualBool(s.t, true, found, "missing password in basic authentication")

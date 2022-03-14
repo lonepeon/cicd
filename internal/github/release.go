@@ -9,6 +9,7 @@ import (
 type ReleaseID int
 
 type Asset struct {
+	Name        string
 	ContentType string
 	Content     []byte
 }
@@ -29,7 +30,7 @@ func CreateRelease(client *Client, repository string, releaseName string, commit
 	}
 
 	if httpCode != http.StatusCreated {
-		return ReleaseID(-99), fmt.Errorf("unexpected create release status code (expected=201, actual=%d)", httpCode)
+		return ReleaseID(-99), fmt.Errorf("unexpected create release status code (expected=201, actual=%d, body=%s)", httpCode, string(body))
 	}
 
 	var response Response
@@ -41,13 +42,13 @@ func CreateRelease(client *Client, repository string, releaseName string, commit
 }
 
 func UploadAsset(client *Client, repository string, releaseID ReleaseID, asset Asset) error {
-	_, httpCode, err := client.PostUpload(fmt.Sprintf("/repos/%s/releases/%d/assets", repository, releaseID), asset.ContentType, asset.Content)
+	body, httpCode, err := client.PostUpload(fmt.Sprintf("/repos/%s/releases/%d/assets?name=%s", repository, releaseID, asset.Name), asset.ContentType, asset.Content)
 	if err != nil {
 		return fmt.Errorf("can't upload asset to release: %v", err)
 	}
 
 	if httpCode != http.StatusCreated {
-		return fmt.Errorf("unexpected upload asset status code (expected=201, actual=%d)", httpCode)
+		return fmt.Errorf("unexpected upload asset status code (expected=201, actual=%d, body=%s)", httpCode, string(body))
 	}
 
 	return nil

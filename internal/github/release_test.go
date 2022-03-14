@@ -34,6 +34,7 @@ func TestUploadAsset(t *testing.T) {
 	server := githubtest.NewUploadServer(t, "<username>", "<token>")
 	server.ExpectedRepository = "lonepeon/something"
 	server.ExpectedReleaseID = 42
+	server.ExpectedAssetName = "mybinary"
 	server.ExpectedContentType = "application/octet-stream"
 	server.ExpectedContent = file.Bytes()
 	client := server.StartMockServer()
@@ -43,6 +44,7 @@ func TestUploadAsset(t *testing.T) {
 		"lonepeon/something",
 		github.ReleaseID(42),
 		github.Asset{
+			Name:        "mybinary",
 			ContentType: "application/octet-stream",
 			Content:     file.Bytes(),
 		},
