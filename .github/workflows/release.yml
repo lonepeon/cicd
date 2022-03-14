@@ -1,0 +1,35 @@
+name: release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-binaries:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "checkout code"
+        uses: actions/checkout@v2
+      - name: "setup go version"
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.17.7"
+      - name: "assert go version"
+        run: make test-go-version
+      - name: "get current date"
+        id: releaseName
+        run: echo "::set-output name=date::$(date +'%Y%m%d%H%M%S')"
+      - name: "build binaries darwin ARM"
+        run: make target-all GOOS=darwin GOARCH=arm64
+      - name: "build binaries darwin AMD64"
+        run: make target-all GOOS=darwin GOARCH=amd64
+      - name: "build binaries linux 386"
+        run: make target-all GOOS=linux GOARCH=386
+      - name: "build binaries linux AMD64"
+        run: make target-all GOOS=linux GOARCH=amd64
+      - name: "create release"
+        run: go run ./cmd/create-release -asset target/assert-version-darwin-arm64 -asset target/assert-version-darwin-amd64 -asset target/assert-version-linux-386 -asset target/assert-version-linux-amd64 -asset target/create-release-darwin-arm64 -asset target/create-release-darwin-amd64 -asset target/create-release-linux-386 -asset target/create-release-linux-amd64 $TAG_NAME main
+        env:
+          PERSONAL_TOKEN: ${{secrets.PERSONAL_TOKEN}}
+          TAG_NAME: v${{ steps.releaseName.outputs.date }}

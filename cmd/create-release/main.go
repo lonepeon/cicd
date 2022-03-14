@@ -77,7 +77,7 @@ func run() error {
 	client := github.NewClient(flags.Username, flags.Token)
 	releaseID, err := github.CreateRelease(client, flags.Repository, flags.ReleaseName, flags.Commitish)
 	if err != nil {
-		return fmt.Errorf("can't create release: %v", err)
+		return fmt.Errorf("can't create release '%s' based on '%s': %v", flags.ReleaseName, flags.Commitish, err)
 	}
 	report.Success("release created")
 

@@ -110,7 +110,7 @@ func (s *ReleaseServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(rawBody, &reqBody)
 	testutils.AssertNoError(s.t, err, "can't decode request body: %v", rawBody)
 
-	testutils.AssertEqualString(s.t, s.ExpectedReleaseName, reqBody["name"], "unexpected release name")
+	testutils.AssertEqualString(s.t, s.ExpectedReleaseName, reqBody["tag_name"], "unexpected tag name")
 	testutils.AssertEqualString(s.t, s.ExpectedCommmitish, reqBody["target_commitish"], "unexpected targetted commit/branch")
 
 	w.WriteHeader(http.StatusCreated)

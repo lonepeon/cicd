@@ -1,11 +1,13 @@
 GO_BIN := go
 CURRENT_SHA := $$(git show --format='%h' --no-patch)
+GOOS := darwin
+GOARCH := amd64
 
 target-all: target/assert-version target/create-release
 
 target/%: cmd/%
 	@mkdir -p target
-	go build -o $@-$(CURRENT_SHA) ./$<
+	go build -o $@-$(GOOS)-$(GOARCH) ./$<
 
 .PHONY: dev-golib-on
 dev-golib-on:

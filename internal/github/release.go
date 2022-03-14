@@ -22,7 +22,6 @@ func CreateRelease(client *Client, repository string, releaseName string, commit
 	body, httpCode, err := client.PostAPI(fmt.Sprintf("/repos/%s/releases", repository), map[string]string{
 		"target_commitish": commitish,
 		"tag_name":         releaseName,
-		"name":             releaseName,
 	})
 
 	if err != nil {
