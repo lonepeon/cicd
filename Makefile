@@ -1,4 +1,11 @@
 GO_BIN := go
+CURRENT_SHA := $$(git show --format='%h' --no-patch)
+
+target-all: target/assert-version target/create-release
+
+target/%: cmd/%
+	@mkdir -p target
+	go build -o $@-$(CURRENT_SHA) ./$<
 
 .PHONY: dev-golib-on
 dev-golib-on:
