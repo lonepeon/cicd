@@ -78,6 +78,8 @@ func languageFromName(name string) (internal.Language, error) {
 	switch name {
 	case "golang":
 		return internal.Go, nil
+	case "rust":
+		return internal.Rust, nil
 	default:
 		return internal.Language(-1), fmt.Errorf("unsupported language '%s'", name)
 	}

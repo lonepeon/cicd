@@ -70,7 +70,7 @@ func TestGetVersion(t *testing.T) {
 	}
 
 	check(TestCase{
-		Name:               "WithOneLineForTheLanguage",
+		Name:               "WithOneLineForGo",
 		ASDFContent:        "golang 1.17.7",
 		Language:           internal.Go,
 		ExpectedVersion:    "1.17.7",
@@ -78,7 +78,15 @@ func TestGetVersion(t *testing.T) {
 	})
 
 	check(TestCase{
-		Name:               "WithSeveralLinesButOneForTheLanguage",
+		Name:               "WithSeveralLinesButOneForRust",
+		ASDFContent:        "ruby 3.1.1\ngolang 1.17.7\nrust 1.59.0",
+		Language:           internal.Rust,
+		ExpectedVersion:    "1.59.0",
+		ExpectedHasVersion: true,
+	})
+
+	check(TestCase{
+		Name:               "WithSeveralLinesButOneForGo",
 		ASDFContent:        "ruby 3.1.1\ngolang 1.17.7\nnodejs 16.13.2",
 		Language:           internal.Go,
 		ExpectedVersion:    "1.17.7",
@@ -86,7 +94,7 @@ func TestGetVersion(t *testing.T) {
 	})
 
 	check(TestCase{
-		Name:               "WithLanguagePresentInComment",
+		Name:               "WithGoPresentInComment",
 		ASDFContent:        "#golang 1.16\ngolang 1.17.7\nnodejs 16.13.2",
 		Language:           internal.Go,
 		ExpectedVersion:    "1.17.7",
@@ -94,7 +102,7 @@ func TestGetVersion(t *testing.T) {
 	})
 
 	check(TestCase{
-		Name:               "WithLanguageFollowedByComment",
+		Name:               "WithGoFollowedByComment",
 		ASDFContent:        "ruby 3.1.1\ngolang 1.17.7 # a comment\nnodejs 16.13.2",
 		Language:           internal.Go,
 		ExpectedVersion:    "1.17.7",
